@@ -1,14 +1,20 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
-project(fernandes_image_describer LANGUAGES CXX)
 
+# Define a política CMP0153
+if(POLICY CMP0153)
+  cmake_policy(SET CMP0153 NEW)
+endif()
+
+project(flutter_tts_plugin)
+project(fernandes_image_describer LANGUAGES CXX)
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "fernandes_image_describer")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
-cmake_policy(VERSION 3.14...3.25)
+cmake_policy(VERSION 3.10...3.25)
 
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

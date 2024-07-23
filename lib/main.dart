@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'api_service.dart';
 
 void main() {
@@ -28,6 +30,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final ImagePicker _picker = ImagePicker();
+  final FlutterTts _flutterTts = FlutterTts();
   File? _image;
   String _recognizedText = '';
   String _selectedLang = 'pt';
@@ -62,30 +65,36 @@ class _MyHomePageState extends State<MyHomePage> {
         _recognizedText = '';
         _textController.clear();
       });
+      _speak('Imagem selecionada');
     }
   }
 
   Future<String> _recognizeImage() async {
-    if (_image == null) return 'No image selected';
+    if (_image == null) {
+      _speak('Nenhuma imagem selecionada');
+      return 'No image selected';
+    }
     setState(() {
       _isLoading = true;
     });
+    _speak('Reconhecimento iniciado');
 
     try {
       final bytes = _image!.readAsBytesSync();
       final base64Image = base64Encode(bytes);
       final id = await ApiService.uploadImage(base64Image, _selectedLang, _useBeMyAI ? 1 : 0);
 
-      // Aguardar 5 segundos antes de buscar o resultado
-      await Future.delayed(Duration(seconds: 1));
-
+      // Aguardar até que o reconhecimento esteja pronto (até 30 segundos)
+      for (int i = 0; i < 30; i++) {
+        await Future.delayed(Duration(seconds: 1));
       final result = await ApiService.getResult(id);
 
       if (result['status'] == 'ok') {
         return result['text'];
-      } else {
-        return 'Recognition not ready or failed';
+        }
       }
+
+        return 'Recognition not ready or failed';
     } catch (e) {
       return 'Failed to recognize the image: $e';
     } finally {
@@ -119,6 +128,24 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Future<void> _speak(String text) async {
+    await _flutterTts.setLanguage("pt-BR");
+    await _flutterTts.setPitch(1.0);
+    await _flutterTts.speak(text);
+  }
+
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,6 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _selectedLang = newValue!;
                   });
+                  _speak('Idioma selecionado: $newValue');
                 },
                 items: _languages.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
@@ -186,12 +214,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 } else if (snapshot.hasData) {
                   _recognizedText = snapshot.data!;
                   _textController.text = _recognizedText;
+                  _speak('Texto reconhecido: $_recognizedText');
+                  _showToast('Texto reconhecido');
                   return TextField(
                     readOnly: true,
                     maxLines: null,
                     controller: _textController,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(),
+              	        border: OutlineInputBorder(),
                       labelText: 'Descrição da imagem',
                       hintText: 'The description will be displayed here',
                     ),
