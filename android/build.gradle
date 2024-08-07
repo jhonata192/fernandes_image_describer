@@ -1,7 +1,11 @@
 allprojects {
+    ext.kotlin_version = '1.9.0' // Atualize para a versão desejada
     repositories {
         google()
         mavenCentral()
+    }
+        classpath 'com.android.tools.build:gradle:7.0.4' // Certifique-se de usar uma versão compatível
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 

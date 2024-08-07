@@ -87,14 +87,13 @@ class _MyHomePageState extends State<MyHomePage> {
       // Aguardar até que o reconhecimento esteja pronto (até 30 segundos)
       for (int i = 0; i < 30; i++) {
         await Future.delayed(Duration(seconds: 1));
-      final result = await ApiService.getResult(id);
-
-      if (result['status'] == 'ok') {
-        return result['text'];
+        final result = await ApiService.getResult(id);
+        if (result['status'] == 'ok') {
+          return result['text'];
         }
       }
 
-        return 'Recognition not ready or failed';
+      return 'Recognition not ready or failed';
     } catch (e) {
       return 'Failed to recognize the image: $e';
     } finally {
@@ -201,7 +200,13 @@ class _MyHomePageState extends State<MyHomePage> {
             if (_isLoading)
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: CircularProgressIndicator(),
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Reconhecimento em andamento...', style: TextStyle(fontSize: 16)),
+                  ],
+                ),
               ),
             SizedBox(height: 16),
             FutureBuilder<String>(
@@ -221,7 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     maxLines: null,
                     controller: _textController,
                     decoration: InputDecoration(
-              	        border: OutlineInputBorder(),
+                      border: OutlineInputBorder(),
                       labelText: 'Descrição da imagem',
                       hintText: 'The description will be displayed here',
                     ),
