@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fernandes Image Describer',
+      title: 'Image Recognition App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -75,7 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _isLoading = true;
     });
-
     _showToast('Reconhecimento iniciado');
 
     try {
@@ -153,6 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _pickImage,
               child: Text('Selecione a imagem'),
             ),
+            SizedBox(height: 16),
             if (_languages.isNotEmpty)
               DropdownButton<String>(
                 value: _selectedLang,
@@ -169,23 +169,32 @@ class _MyHomePageState extends State<MyHomePage> {
                   );
                 }).toList(),
               ),
+            SizedBox(height: 16),
             Semantics(
               label: 'Usar Be My Ai',
               child: Row(
                 children: [
                   Text('Usar Be My Ai'),
-                  Switch(
-                    value: _useBeMyAI,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _useBeMyAI = value;
-                      });
-                    },
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Switch(
+                      value: _useBeMyAI,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _useBeMyAI = value;
+                        });
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-            if (_image != null) Image.file(_image!),
+            SizedBox(height: 16),
+            if (_image != null)
+              Expanded(
+                child: Image.file(_image!),
+              ),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: _startRecognition,
               child: Text('Reconhecer imagem'),
@@ -202,31 +211,33 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             SizedBox(height: 16),
-            FutureBuilder<String>(
-              future: _recognitionFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Text('Recognition in progress...');
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else if (snapshot.hasData) {
-                  _recognizedText = snapshot.data!;
-                  _textController.text = _recognizedText;
-                  _showToast('Texto reconhecido');
-                  return TextField(
-                    readOnly: true,
-                    maxLines: null,
-                    controller: _textController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Descrição da imagem',
-                      hintText: 'The description will be displayed here',
-                    ),
-                  );
-                } else {
-                  return Text('No result');
-                }
-              },
+            Expanded(
+              child: FutureBuilder<String>(
+                future: _recognitionFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: Text('Recognition in progress...'));
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    _recognizedText = snapshot.data!;
+                    _textController.text = _recognizedText;
+                    _showToast('Texto reconhecido');
+                    return TextField(
+                      readOnly: true,
+                      maxLines: null,
+                      controller: _textController,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Descrição da imagem',
+                        hintText: 'The description will be displayed here',
+                      ),
+                    );
+                  } else {
+                    return Center(child: Text('No result'));
+                  }
+                },
+              ),
             ),
           ],
         ),
