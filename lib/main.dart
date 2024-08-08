@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'api_service.dart';
 
@@ -14,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Image Recognition App',
+      title: 'Fernandes Image Describer',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -30,7 +29,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final ImagePicker _picker = ImagePicker();
-  final FlutterTts _flutterTts = FlutterTts();
   File? _image;
   String _recognizedText = '';
   String _selectedLang = 'pt';
@@ -65,19 +63,20 @@ class _MyHomePageState extends State<MyHomePage> {
         _recognizedText = '';
         _textController.clear();
       });
-      _speak('Imagem selecionada');
+      _showToast('Imagem selecionada');
     }
   }
 
   Future<String> _recognizeImage() async {
     if (_image == null) {
-      _speak('Nenhuma imagem selecionada');
+      _showToast('Nenhuma imagem selecionada');
       return 'No image selected';
     }
     setState(() {
       _isLoading = true;
     });
-    _speak('Reconhecimento iniciado');
+
+    _showToast('Reconhecimento iniciado');
 
     try {
       final bytes = _image!.readAsBytesSync();
@@ -127,12 +126,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> _speak(String text) async {
-    await _flutterTts.setLanguage("pt-BR");
-    await _flutterTts.setPitch(1.0);
-    await _flutterTts.speak(text);
-  }
-
   void _showToast(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -167,7 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     _selectedLang = newValue!;
                   });
-                  _speak('Idioma selecionado: $newValue');
+                  _showToast('Idioma selecionado: $newValue');
                 },
                 items: _languages.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
@@ -219,7 +212,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 } else if (snapshot.hasData) {
                   _recognizedText = snapshot.data!;
                   _textController.text = _recognizedText;
-                  _speak('Texto reconhecido: $_recognizedText');
                   _showToast('Texto reconhecido');
                   return TextField(
                     readOnly: true,
