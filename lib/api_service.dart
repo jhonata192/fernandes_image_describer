@@ -2,66 +2,46 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'https://visionbot.ru/apiv2';
+  static const String _baseUrl = 'https://visionbot.ru/apiv2';
+  static const String _languagesEndpoint = '/get_languages.php';
+  static const String _uploadEndpoint = '/in.php';
+  static const String _resultEndpoint = '/res.php';
+  static const Duration _timeoutDuration = Duration(seconds: 10);
 
   static Future<List<String>> getLanguages() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/get_languages.php'));
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        return List<String>.from(data['languages']);
-      } else {
-        print('Failed to load languages: ${response.statusCode}');
-        throw Exception('Failed to load languages');
-      }
-    } catch (e) {
-      print('Exception caught: $e');
-      throw Exception('Failed to load languages: $e');
-    }
+    final url = Uri.parse('$_baseUrl$_languagesEndpoint');
+    final response = await _makeRequest(() => http.get(url));
+    return List<String>.from(response['languages']);
   }
 
   static Future<String> uploadImage(String base64Image, String lang, int bm) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/in.php'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'body': base64Image,
-          'lang': lang,
-          'bm': bm.toString(),
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        print('Upload response: $data');
-        return data['id'];
-      } else {
-        print('Failed to upload image: ${response.statusCode}');
-        throw Exception('Failed to upload image');
-      }
-    } catch (e) {
-      print('Exception caught: $e');
-      throw Exception('Failed to upload image: $e');
-    }
+    final url = Uri.parse('$_baseUrl$_uploadEndpoint');
+    final response = await _makeRequest(() => http.post(
+      url,
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {'body': base64Image, 'lang': lang, 'bm': bm.toString()},
+    ));
+    return response['id'];
   }
 
   static Future<Map<String, dynamic>> getResult(String id) async {
+    final url = Uri.parse('$_baseUrl$_resultEndpoint');
+    final response = await _makeRequest(() => http.post(url, body: {'id': id}));
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> _makeRequest(Future<http.Response> Function() request) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/res.php'),
-        body: {'id': id},
-      );
+      final response = await request().timeout(_timeoutDuration);
       if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        print('Get result response: $data');
-        return data;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       } else {
-        print('Failed to get result: ${response.statusCode}');
-        throw Exception('Failed to get result');
+        print('Failed request with status code: ${response.statusCode}');
+        throw Exception('Failed to complete request: ${response.statusCode}');
       }
-    } catch (e) {
-      print('Exception caught: $e');
-      throw Exception('Failed to get result: $e');
+    } catch (e, stackTrace) {
+      print('Exception caught: $e\nStackTrace: $stackTrace');
+      throw Exception('Error during API request: $e');
     }
   }
 }
